@@ -33,6 +33,12 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 
+[tool.ruff.lint.per-file-ignores]
+# Notebooks Databricks: `dbutils`/`spark` são injetados pelo runtime (F821),
+# e o formato de células (`# COMMAND ----------`) exige imports após a
+# configuração dos widgets, não no topo do arquivo (E402).
+"notebooks/*.py" = ["F821", "E402"]
+
 [tool.black]
 line-length = 100
 target-version = ["py310"]
