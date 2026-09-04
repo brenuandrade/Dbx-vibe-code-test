@@ -178,6 +178,9 @@ mexer nos outros.
   em cada pull request.
 - **CD** (`.github/workflows/cd.yml`): deploy automático do bundle para o ambiente
   correspondente ao fazer merge/push na branch principal.
+- **Run Job** (`.github/workflows/run-job.yml`, manual): dispara uma execução única
+  (`databricks bundle run etl_pipeline_job -t <target>`) sem depender do cron — útil
+  para validar o pipeline de ponta a ponta sob demanda, com o job continuando pausado.
 
 ## 📄 Licença
 

@@ -1,0 +1,25 @@
+name: Run Job
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target onde rodar o job (dev, staging, prod)"
+        required: true
+        default: "dev"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Run etl_pipeline_job once (validação sob demanda)
+        run: databricks bundle run etl_pipeline_job -t ${{ inputs.target }}
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DBX_SECRET_TRIAL }}
