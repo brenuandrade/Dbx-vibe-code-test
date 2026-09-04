@@ -161,9 +161,14 @@ Essa separação permite:
 
 ## Ambientes
 
-O `databricks.yml` define três targets (`dev`, `staging`, `prod`), cada um com
-seu próprio workspace, catálogo e (em staging/prod) service principal de
-execução — seguindo o princípio de isolamento entre ambientes. Atualmente
-apenas `dev` aponta para um workspace real
-(`dbc-fc266d3f-2a0d.cloud.databricks.com`); `staging`/`prod` seguem como
-placeholders até que esses workspaces existam.
+O `databricks.yml` define três targets (`dev`, `staging`, `prod`). `dev` e
+`prod` compartilham hoje o único workspace real disponível
+(`dbc-fc266d3f-2a0d.cloud.databricks.com`), isolados entre si pelo catálogo
+do Unity Catalog (`dev`/`prod`) e pelo `root_path` — não há, por ora, um
+service principal dedicado para `prod`: o deploy roda com a identidade do
+token configurado (`DBX_SECRET_TRIAL`). `staging` segue como placeholder até
+que um workspace próprio exista. Quando um workspace de produção separado
+(ou um service principal dedicado) estiver disponível, atualize o target
+`prod` de acordo — a separação por catálogo é um ponto de partida razoável
+para o estágio atual do projeto, não a configuração final recomendada para
+produção em Databricks.

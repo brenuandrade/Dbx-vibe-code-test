@@ -154,11 +154,14 @@ databricks bundle run etl_pipeline_job -t dev
 
 ## 🌍 Ambientes
 
-O `databricks.yml` define os targets `dev`, `staging` e `prod`. Por ora, `dev`
-aponta para o único workspace disponível
-(`dbc-fc266d3f-2a0d.cloud.databricks.com`); `staging`/`prod` ainda usam
-placeholders — atualize o host (e o service principal) quando esses
-workspaces existirem.
+O `databricks.yml` define os targets `dev`, `staging` e `prod`. `dev` e `prod`
+apontam para o único workspace disponível
+(`dbc-fc266d3f-2a0d.cloud.databricks.com`), isolados entre si pelo catálogo
+do Unity Catalog (`dev` vs `prod`) e pelo `root_path`; `staging` ainda usa
+placeholders — atualize o host (e o service principal) quando esse workspace
+existir. `prod` roda sem `run_as` dedicado (usa a identidade do token
+cadastrado em `DBX_SECRET_TRIAL`) até que um service principal próprio
+esteja disponível.
 
 ## ✅ Qualidade de dados e testes
 
