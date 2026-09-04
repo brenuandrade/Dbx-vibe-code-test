@@ -161,14 +161,32 @@ Essa separação permite:
 
 ## Ambientes
 
-O `databricks.yml` define três targets (`dev`, `staging`, `prod`). `dev` e
-`prod` compartilham hoje o único workspace real disponível
-(`dbc-fc266d3f-2a0d.cloud.databricks.com`), isolados entre si pelo catálogo
-do Unity Catalog (`dev`/`prod`) e pelo `root_path` — não há, por ora, um
-service principal dedicado para `prod`: o deploy roda com a identidade do
-token configurado (`DBX_SECRET_TRIAL`). `staging` segue como placeholder até
-que um workspace próprio exista. Quando um workspace de produção separado
-(ou um service principal dedicado) estiver disponível, atualize o target
-`prod` de acordo — a separação por catálogo é um ponto de partida razoável
-para o estágio atual do projeto, não a configuração final recomendada para
-produção em Databricks.
+O `databricks.yml` define três targets (`dev`, `staging`, `prod`), que hoje
+compartilham o único workspace real disponível
+(`dbc-fc266d3f-2a0d.cloud.databricks.com`). O host é repetido literalmente
+nos três `workspace.host` de propósito: é um campo de autenticação,
+resolvido pela Databricks CLI *antes* das variáveis do bundle serem
+processadas — uma tentativa inicial de centralizar isso numa variável
+(`${var.workspace_host}`) falhou em um deploy real com `Variable
+interpolation is not supported for fields that configure authentication`.
+O isolamento entre ambientes vem, então, de dois eixos ortogonais ao
+workspace físico:
+
+- **Catálogo do Unity Catalog** (`dev`/`staging`/`prod`, via variável
+  `catalog` por target) — cada ambiente tem seus próprios schemas
+  `bronze`/`silver`/`gold`, sem risco de um ambiente sobrescrever dado do
+  outro.
+- **`root_path`** — `dev` usa a pasta pessoal do usuário
+  (`/Workspace/Users/...`); `staging` e `prod` usam `/Shared/.bundle/.../
+  <target>`, que não colidem entre si por incluírem `${bundle.target}` no
+  caminho.
+
+Não há, por ora, service principal dedicado por ambiente: todo deploy roda
+com a identidade do token configurado (`DBX_SECRET_TRIAL`). Quando um
+workspace de produção (ou de staging) separado, ou um service principal
+dedicado, estiver disponível, basta trocar o `workspace.host` daquele
+target especificamente e/ou adicionar `run_as` — sem tocar nos demais
+targets. A separação por catálogo dentro de um único
+workspace é um ponto de partida razoável para o estágio atual do projeto,
+não a configuração final recomendada para produção em Databricks (onde o
+usual é workspaces física ou logicamente separados por ambiente).
