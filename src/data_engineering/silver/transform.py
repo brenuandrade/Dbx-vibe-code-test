@@ -46,7 +46,9 @@ def standardize_nulls(df: DataFrame, columns: list[str]) -> DataFrame:
     return df
 
 
-def clean_bronze_to_silver(df: DataFrame, key_columns: list[str], order_by_column: str) -> DataFrame:
+def clean_bronze_to_silver(
+    df: DataFrame, key_columns: list[str], order_by_column: str
+) -> DataFrame:
     """Pipeline de limpeza padrão aplicado ao promover dados de Bronze para Silver."""
     df = trim_string_columns(df)
     df = standardize_nulls(df, columns=key_columns)

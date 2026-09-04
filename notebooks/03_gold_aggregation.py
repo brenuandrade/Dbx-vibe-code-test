@@ -1,8 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Gold — Agregações de negócio
-# MAGIC Lê os dados da camada Silver e cria métricas agregadas prontas para consumo
-# MAGIC (dashboards, ML, relatórios).
+# MAGIC # Gold — Acompanhamento near-time da Black Friday
+# MAGIC Lê os pedidos da camada Silver e cria uma métrica agregada em janelas de
+# MAGIC 15 minutos (volume de pedidos, itens vendidos e receita bruta por canal),
+# MAGIC pronta para alimentar um dashboard de acompanhamento em quase tempo real.
 
 # COMMAND ----------
 
@@ -20,23 +21,29 @@ import sys
 
 sys.path.append("../src")
 
-from data_engineering.gold.aggregate import build_daily_summary  # noqa: E402
+from pyspark.sql import functions as F  # noqa: E402
+
+from data_engineering.gold.aggregate import build_near_time_sales_summary  # noqa: E402
 from data_engineering.utils.spark_session import get_spark_session  # noqa: E402
 
 spark = get_spark_session()
 
 # COMMAND ----------
 
-silver_table = f"{catalog}.{schema_silver}.exemplo"
-gold_table = f"{catalog}.{schema_gold}.exemplo_daily_summary"
+silver_table = f"{catalog}.{schema_silver}.orders"
+gold_table = f"{catalog}.{schema_gold}.near_time_sales_by_channel"
 
-silver_df = spark.table(silver_table)
+orders_df = spark.table(silver_table).withColumn(
+    "order_timestamp", F.to_timestamp("order_timestamp")
+)
 
-gold_df = build_daily_summary(
-    silver_df,
-    date_column="_ingested_at",
-    group_by_columns=["_source"],
-    value_column="id",  # ajuste para a coluna de métrica real
+# COMMAND ----------
+
+gold_df = build_near_time_sales_summary(
+    orders_df,
+    timestamp_column="order_timestamp",
+    window_duration="15 minutes",
+    group_by_columns=["channel"],
 )
 
 # COMMAND ----------

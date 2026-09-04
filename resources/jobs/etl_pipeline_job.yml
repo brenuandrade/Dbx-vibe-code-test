@@ -7,7 +7,11 @@ resources:
       name: "[${bundle.target}] ETL Pipeline - Bronze/Silver/Gold"
 
       schedule:
-        quartz_cron_expression: "0 0 3 * * ?" # todos os dias às 03:00
+        # Cadência near-time: a cada 15 minutos, para acompanhar o andamento
+        # da Black Friday em quase tempo real. Fora da janela do evento, o
+        # job deve ficar pausado (ou trocar para uma cadência diária, como
+        # antes) para evitar processamento/custo desnecessário.
+        quartz_cron_expression: "0 */15 * * * ?"
         timezone_id: "America/Sao_Paulo"
         pause_status: PAUSED # remova/mude para UNPAUSED quando o pipeline estiver validado
 
@@ -34,6 +38,7 @@ resources:
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema_bronze}
+              black_friday_year: ${var.black_friday_year}
 
         - task_key: silver_transformation
           depends_on:

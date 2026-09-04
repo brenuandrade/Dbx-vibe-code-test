@@ -4,6 +4,42 @@ Projeto de engenharia de dados construído para rodar no **Databricks**, usando
 **Databricks Asset Bundles (DABs)** para deploy, **PySpark** para as transformações
 e a **arquitetura medalhão** (Bronze → Silver → Gold) para organização dos dados.
 
+**Workspace:** `dbc-fc266d3f-2a0d.cloud.databricks.com` (target `dev` em `databricks.yml`).
+
+## 🛍️ Cenário: acompanhamento near-time da Black Friday
+
+O pipeline simula o acompanhamento em quase tempo real de um varejo durante a
+Black Friday, usando **dados 100% sintéticos** (nenhum dado real é usado).
+A camada Bronze gera e ingere cinco entidades:
+
+| Entidade     | Descrição                                                            |
+|--------------|-----------------------------------------------------------------------|
+| `products`   | Catálogo de produtos (categoria, marca, preço)                       |
+| `stores`     | Rede de lojas físicas e digitais                                     |
+| `customers`  | Base de consumidores                                                 |
+| `addresses`  | Endereços de entrega dos consumidores                                |
+| `orders`     | Pedidos, no grão de **item de pedido** — um evento de checkout      |
+
+A tabela `orders` é a mais importante para o acompanhamento near-time: os
+timestamps são concentrados no dia da Black Friday (última sexta-feira de
+novembro), seguindo um padrão de tráfego realista (pico à meia-noite, vale
+pela manhã, segundo pico no fim da tarde), e cada evento carrega
+`source_ingested_at` simulando o atraso de ingestão do sistema de origem.
+
+**Os dados incluem ruído proposital**, para se aproximar do mundo real:
+valores nulos, e-mails/telefones/CEPs mal formatados, preços ora numéricos
+ora como string em formato BRL (`"R$ 1.234,56"`), duplicatas por
+reenvio/retry (mais frequentes em `orders`, simulando o pico de carga),
+referências órfãs (ex.: pedido apontando para um `customer_id` inexistente)
+e status/categorias com caixa e espaçamento inconsistentes. Veja
+`src/data_engineering/bronze/synthetic_data.py` (geradores) e
+`src/data_engineering/bronze/noise.py` (utilitários de ruído, reutilizáveis).
+
+Para regenerar o dataset com outros volumes, ajuste os widgets do notebook
+`01_bronze_ingestion.py` (`n_customers`, `n_products`, `n_stores`, `n_orders`,
+`black_friday_year`) ou os parâmetros do job em
+`resources/jobs/etl_pipeline_job.yml`.
+
 ## 🏗️ Arquitetura
 
 ```
@@ -82,9 +118,11 @@ databricks bundle run etl_pipeline_job -t dev
 
 ## 🌍 Ambientes
 
-O `databricks.yml` define os targets `dev`, `staging` e `prod`. Cada um aponta
-para um workspace/host diferente e usa o arquivo de configuração correspondente
-em `conf/`.
+O `databricks.yml` define os targets `dev`, `staging` e `prod`. Por ora, `dev`
+aponta para o único workspace disponível
+(`dbc-fc266d3f-2a0d.cloud.databricks.com`); `staging`/`prod` ainda usam
+placeholders — atualize o host (e o service principal) quando esses
+workspaces existirem.
 
 ## ✅ Qualidade de dados e testes
 

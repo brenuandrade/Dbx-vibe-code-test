@@ -21,6 +21,11 @@ variables:
   schema_gold:
     description: Schema da camada Gold
     default: gold
+  black_friday_year:
+    description: >-
+      Ano de referência da Black Friday simulada (a data exata é calculada
+      como a última sexta-feira de novembro desse ano).
+    default: "2026"
 
 artifacts:
   data_engineering_wheel:
@@ -33,11 +38,15 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://<seu-workspace-dev>.cloud.databricks.com
+      host: https://dbc-fc266d3f-2a0d.cloud.databricks.com
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: dev
 
+  # staging/prod ainda apontam para placeholders — atualize o host (e, se for
+  # o caso, o service principal) quando esses workspaces existirem. Por ora
+  # o projeto roda inteiramente no workspace único configurado em "dev":
+  # dbc-fc266d3f-2a0d.cloud.databricks.com
   staging:
     mode: production
     workspace:
