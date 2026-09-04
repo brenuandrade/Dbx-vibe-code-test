@@ -60,3 +60,23 @@ def build_near_time_sales_summary(
         )
         .orderBy("window_start", *group_by_columns)
     )
+
+
+def build_customer_summary(customers_df: DataFrame, orders_df: DataFrame) -> DataFrame:
+    """Cria uma visão 360 do cliente: dados cadastrais + métricas agregadas
+    de pedidos (total de pedidos, gasto total, data do último pedido).
+
+    Contém colunas PII (``full_name``, ``email``, ``cpf``) — antes de liberar
+    o acesso a esta tabela, aplique o mascaramento de
+    ``data_engineering.gold.privacy`` (ver ``apply_privacy_layer``).
+    """
+    order_agg = orders_df.groupBy("customer_id").agg(
+        F.countDistinct("order_id").alias("total_orders"),
+        F.sum("line_total").alias("total_spent"),
+        F.max(F.to_timestamp("order_timestamp")).alias("last_order_at"),
+    )
+    return (
+        customers_df.select("customer_id", "full_name", "email", "cpf", "loyalty_tier")
+        .join(order_agg, on="customer_id", how="left")
+        .fillna({"total_orders": 0, "total_spent": 0.0})
+    )

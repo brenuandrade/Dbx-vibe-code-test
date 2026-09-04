@@ -26,6 +26,22 @@ variables:
       Ano de referência da Black Friday simulada (a data exata é calculada
       como a última sexta-feira de novembro desse ano).
     default: "2026"
+  admin_group:
+    description: >-
+      Grupo do Unity Catalog com acesso irrestrito às colunas PII das
+      tabelas Gold (via is_account_group_member nas máscaras de coluna).
+    default: admins
+  analyst_group:
+    description: >-
+      Grupo do Unity Catalog com SELECT nas tabelas Gold, mas sem acesso ao
+      valor real das colunas PII (vê os dados mascarados).
+    default: analysts
+  run_stress_test:
+    description: >-
+      Se "true", a task de Gold também roda os cenários de data skew e pico
+      de ingestão (ver data_engineering.gold.simulate), gravando os
+      resultados em tabelas *_stress_test separadas das métricas reais.
+    default: "false"
 
 artifacts:
   data_engineering_wheel:

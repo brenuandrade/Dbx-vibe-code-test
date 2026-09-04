@@ -40,6 +40,42 @@ Para regenerar o dataset com outros volumes, ajuste os widgets do notebook
 `black_friday_year`) ou os parâmetros do job em
 `resources/jobs/etl_pipeline_job.yml`.
 
+### 🔒 Privacidade na camada Gold
+
+A tabela `gold.customer_summary` combina dados cadastrais (nome, e-mail,
+CPF) com métricas de pedidos. Essas três colunas são PII e ficam protegidas
+por **Unity Catalog Column Masks** (`data_engineering.gold.privacy`):
+
+- Membros do grupo `admin_group` (padrão: `admins`) veem o valor real.
+- Qualquer outro grupo com `SELECT` na tabela (padrão: `analyst_group` =
+  `analysts`) vê o valor ofuscado (ex.: `"João ***"`, `"***@gmail.com"`,
+  `"***.***.***-21"`), mas continua enxergando `total_orders`,
+  `total_spent`, `loyalty_tier` etc. normalmente — o mascaramento é por
+  **coluna**, não por tabela inteira.
+
+O mascaramento é aplicado automaticamente pelo notebook
+`03_gold_aggregation.py` logo após gravar a tabela. Ajuste `admin_group`/
+`analyst_group` via widgets do notebook ou variáveis do bundle
+(`databricks.yml`) para os grupos reais do seu workspace.
+
+### 🔥 Simulação de skew e picos de ingestão
+
+`data_engineering.gold.simulate` traz duas funções para testar a
+resiliência do pipeline antes do dia real:
+
+- `simulate_data_skew`: concentra o volume em uma fração pequena de chaves
+  (ex.: 2% dos produtos recebendo a maior parte dos pedidos), simulando um
+  item "viral" de campanha-relâmpago — o cenário clássico de partição
+  desbalanceada em `groupBy`/`join` no Spark.
+- `simulate_ingestion_spike`: multiplica o volume de uma janela curta de
+  tempo (ex.: 5 minutos na abertura da Black Friday), simulando o pico de
+  tráfego típico de meia-noite, incluindo atraso extra de ingestão
+  (backlog de fila).
+
+O notebook `03_gold_aggregation.py` roda esses cenários quando o widget
+`run_stress_test=true`, gravando o resultado em
+`gold.near_time_sales_by_channel_stress_test` — sem afetar a métrica real.
+
 ## 🏗️ Arquitetura
 
 ```
