@@ -1,0 +1,13 @@
+# Exemplo de configuração por ambiente. Copie para "dev.yaml" (ignorado pelo git)
+# e ajuste os valores conforme o seu workspace.
+
+catalog: dev
+schemas:
+  bronze: bronze
+  silver: silver
+  gold: gold
+
+sources:
+  exemplo:
+    path: /Volumes/main/landing/raw_files/exemplo
+    format: csv

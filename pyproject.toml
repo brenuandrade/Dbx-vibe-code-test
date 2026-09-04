@@ -1,0 +1,38 @@
+[project]
+name = "dbx-vibe-code-test"
+version = "0.1.0"
+description = "Projeto de engenharia de dados para Databricks (arquitetura medalhão)"
+requires-python = ">=3.10"
+dependencies = [
+    "pyspark>=3.5.0,<4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+    "black>=24.0.0",
+    "databricks-connect>=15.4.0,<15.5.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]

@@ -1,0 +1,59 @@
+# Databricks Asset Bundle configuration
+# Documentação: https://docs.databricks.com/dev-tools/bundles/index.html
+
+bundle:
+  name: dbx-vibe-code-test
+
+include:
+  - resources/*.yml
+  - resources/**/*.yml
+
+variables:
+  catalog:
+    description: Catálogo do Unity Catalog usado pelo pipeline
+    default: main
+  schema_bronze:
+    description: Schema da camada Bronze
+    default: bronze
+  schema_silver:
+    description: Schema da camada Silver
+    default: silver
+  schema_gold:
+    description: Schema da camada Gold
+    default: gold
+
+artifacts:
+  data_engineering_wheel:
+    type: whl
+    build: python setup.py bdist_wheel
+    path: .
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://<seu-workspace-dev>.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: dev
+
+  staging:
+    mode: production
+    workspace:
+      host: https://<seu-workspace-staging>.cloud.databricks.com
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: staging
+    run_as:
+      service_principal_name: <service-principal-staging>
+
+  prod:
+    mode: production
+    workspace:
+      host: https://<seu-workspace-prod>.cloud.databricks.com
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: prod
+    run_as:
+      service_principal_name: <service-principal-prod>
