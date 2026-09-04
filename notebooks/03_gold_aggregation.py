@@ -48,9 +48,14 @@ from data_engineering.gold.simulate import (  # noqa: E402
     simulate_data_skew,
     simulate_ingestion_spike,
 )
+from data_engineering.utils.catalog import ensure_catalog_schema  # noqa: E402
 from data_engineering.utils.spark_session import get_spark_session  # noqa: E402
 
 spark = get_spark_session()
+
+# COMMAND ----------
+
+ensure_catalog_schema(spark, catalog=catalog, schema=schema_gold)
 
 # COMMAND ----------
 

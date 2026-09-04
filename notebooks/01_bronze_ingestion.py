@@ -39,9 +39,17 @@ sys.path.append("../src")
 
 from data_engineering.bronze.ingest import ingest_raw_source, write_bronze_table  # noqa: E402
 from data_engineering.bronze.synthetic_data import generate_black_friday_dataset  # noqa: E402
+from data_engineering.utils.catalog import ensure_catalog_schema  # noqa: E402
 from data_engineering.utils.spark_session import get_spark_session  # noqa: E402
 
 spark = get_spark_session()
+
+# COMMAND ----------
+
+# Databricks Asset Bundles não cria catálogos/schemas do Unity Catalog
+# automaticamente — só os recursos declarados em resources/ (jobs etc.).
+# Garante que catalog.schema existam antes da primeira escrita.
+ensure_catalog_schema(spark, catalog=catalog, schema=schema)
 
 # COMMAND ----------
 

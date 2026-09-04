@@ -27,6 +27,7 @@ import sys
 sys.path.append("../src")
 
 from data_engineering.silver.transform import clean_bronze_to_silver  # noqa: E402
+from data_engineering.utils.catalog import ensure_catalog_schema  # noqa: E402
 from data_engineering.utils.data_quality import (  # noqa: E402
     check_no_duplicates,
     check_no_nulls,
@@ -35,6 +36,10 @@ from data_engineering.utils.data_quality import (  # noqa: E402
 from data_engineering.utils.spark_session import get_spark_session  # noqa: E402
 
 spark = get_spark_session()
+
+# COMMAND ----------
+
+ensure_catalog_schema(spark, catalog=catalog, schema=schema_silver)
 
 # COMMAND ----------
 
