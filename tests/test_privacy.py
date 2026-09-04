@@ -18,6 +18,26 @@ class FakeSpark:
         return None
 
 
+class FailingGrantFakeSpark:
+    """Dublê que simula um GRANT falhando para um grupo inexistente no
+    Unity Catalog (PRINCIPAL_DOES_NOT_EXIST) — cenário real de workspace
+    sem os grupos de governança provisionados.
+    """
+
+    def __init__(self, failing_group: str):
+        self.executed: list[str] = []
+        self.failing_group = failing_group
+
+    def sql(self, query: str):
+        self.executed.append(query)
+        if f"TO `{self.failing_group}`" in query:
+            raise Exception(
+                f"[PRINCIPAL_DOES_NOT_EXIST] Could not find principal with name "
+                f"{self.failing_group}."
+            )
+        return None
+
+
 def test_build_mask_function_sql_creates_one_function_per_pii_column():
     functions = build_mask_function_sql(catalog="dev", schema="gold", admin_group="admins")
     assert set(functions.keys()) == set(PII_MASKS.values())
@@ -131,3 +151,31 @@ def test_apply_privacy_layer_skips_alter_table_when_no_pii_columns():
     # as 3 funções de máscara ainda são criadas (idempotente, custo desprezível)
     create_statements = [s for s in fake_spark.executed if "CREATE OR REPLACE FUNCTION" in s]
     assert len(create_statements) == 3
+
+
+def test_apply_privacy_layer_tolerates_grant_to_nonexistent_group(capsys):
+    """Um grupo (ex.: 'analysts') pode ainda não existir no Unity Catalog do
+    workspace — isso não deve derrubar o pipeline: as máscaras já foram
+    aplicadas antes do grant, que é best-effort.
+    """
+    fake_spark = FailingGrantFakeSpark(failing_group="analysts")
+
+    apply_privacy_layer(
+        fake_spark,
+        full_table_name="dev.gold.customer_summary",
+        catalog="dev",
+        schema="gold",
+        table_columns=["full_name", "email", "cpf"],
+        admin_group="admins",
+        read_groups=["analysts"],
+    )
+
+    # máscaras continuam sendo criadas/aplicadas normalmente
+    assert any("CREATE OR REPLACE FUNCTION" in s for s in fake_spark.executed)
+    assert any(s.startswith("ALTER TABLE") for s in fake_spark.executed)
+    # o grant para o grupo seguinte (admins) ainda é tentado, apesar da falha
+    assert "GRANT SELECT ON TABLE dev.gold.customer_summary TO `admins`" in fake_spark.executed
+
+    captured = capsys.readouterr()
+    assert "analysts" in captured.out
+    assert "PRINCIPAL_DOES_NOT_EXIST" in captured.out

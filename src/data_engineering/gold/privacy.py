@@ -136,6 +136,14 @@ def apply_privacy_layer(
 
     Idempotente: usa ``CREATE OR REPLACE FUNCTION`` e ``SET MASK``, seguros
     de reexecutar a cada deploy/execução do pipeline.
+
+    O ``GRANT`` a cada grupo em ``read_groups``/``admin_group`` é best-effort:
+    se um grupo ainda não existir no Unity Catalog (``PRINCIPAL_DOES_NOT_EXIST``
+    — comum enquanto os grupos de governança não foram provisionados no
+    workspace), a falha é registrada e a execução segue para os próximos
+    grants, em vez de derrubar o pipeline inteiro. As máscaras — a parte que
+    de fato protege o PII — já foram criadas e aplicadas antes deste passo,
+    então continuam valendo mesmo se algum grant falhar.
     """
     read_groups = list(read_groups or [])
     if admin_group not in read_groups:
@@ -148,4 +156,7 @@ def apply_privacy_layer(
         spark.sql(statement)
 
     for statement in build_grant_sql(full_table_name, read_groups):
-        spark.sql(statement)
+        try:
+            spark.sql(statement)
+        except Exception as exc:  # noqa: BLE001 - best-effort, ver docstring
+            print(f"[privacy] Aviso: falha ao conceder acesso ('{statement}'): {exc}")
