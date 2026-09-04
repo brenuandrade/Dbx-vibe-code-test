@@ -4,7 +4,7 @@ Projeto de engenharia de dados construído para rodar no **Databricks**, usando
 **Databricks Asset Bundles (DABs)** para deploy, **PySpark** para as transformações
 e a **arquitetura medalhão** (Bronze → Silver → Gold) para organização dos dados.
 
-**Workspace:** `dbc-fc266d3f-2a0d.cloud.databricks.com` — compartilhado por `dev`, `staging` e `prod` (variável `workspace_host` em `databricks.yml`), cada ambiente isolado por catálogo do Unity Catalog.
+**Workspace:** `dbc-fc266d3f-2a0d.cloud.databricks.com` — compartilhado por `dev`, `staging` e `prod` (`databricks.yml`), cada ambiente isolado por catálogo do Unity Catalog.
 
 ## 🛍️ Cenário: acompanhamento near-time da Black Friday
 
@@ -155,15 +155,16 @@ databricks bundle run etl_pipeline_job -t dev
 ## 🌍 Ambientes
 
 O `databricks.yml` define os targets `dev`, `staging` e `prod`. Os três
-compartilham hoje o único workspace disponível — a variável
-`workspace_host` (default `dbc-fc266d3f-2a0d.cloud.databricks.com`),
-referenciada como `${var.workspace_host}` em cada `workspace.host` — e são
-isolados entre si por catálogo do Unity Catalog (`dev`/`staging`/`prod`) e
-por `root_path`. Nenhum target usa `run_as` dedicado ainda: o deploy roda
-com a identidade do token cadastrado em `DBX_SECRET_TRIAL`. Quando um
+compartilham hoje o único workspace disponível
+(`dbc-fc266d3f-2a0d.cloud.databricks.com`, repetido literalmente em cada
+`workspace.host` — a Databricks CLI não permite usar `${var...}` nesse
+campo, por ser resolvido antes das variáveis do bundle) e são isolados
+entre si por catálogo do Unity Catalog (`dev`/`staging`/`prod`) e por
+`root_path`. Nenhum target usa `run_as` dedicado ainda: o deploy roda com
+a identidade do token cadastrado em `DBX_SECRET_TRIAL`. Quando um
 workspace de produção (ou service principal) dedicado existir, basta
-sobrescrever `workspace_host` (ou o `workspace.host`) no target
-correspondente — não é preciso mexer nos outros.
+trocar o `workspace.host` daquele target especificamente — não é preciso
+mexer nos outros.
 
 ## ✅ Qualidade de dados e testes
 

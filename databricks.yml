@@ -9,13 +9,6 @@ include:
   - resources/**/*.yml
 
 variables:
-  workspace_host:
-    description: >-
-      Host do workspace Databricks usado por todos os targets. Único
-      workspace disponível hoje — quando um workspace de produção dedicado
-      existir, sobrescreva esta variável (ou o workspace.host) apenas no
-      target que precisar mudar.
-    default: https://dbc-fc266d3f-2a0d.cloud.databricks.com
   catalog:
     description: Catálogo do Unity Catalog usado pelo pipeline
     default: main
@@ -57,19 +50,27 @@ artifacts:
     path: .
 
 # dev, staging e prod compartilham hoje o único workspace disponível
-# (${var.workspace_host}), isolados entre si por dois eixos: o catálogo do
-# Unity Catalog (dev/staging/prod, cada um com seus próprios schemas
-# bronze/silver/gold) e o root_path (pasta pessoal do usuário em dev;
-# /Shared/.bundle/.../staging e /Shared/.bundle/.../prod, que não colidem
-# entre si). Nenhum target usa run_as dedicado ainda: o deploy roda com a
-# identidade do token cadastrado em DBX_SECRET_TRIAL — trocar por um
-# service principal por ambiente quando estiverem disponíveis.
+# (dbc-fc266d3f-2a0d.cloud.databricks.com), isolados entre si por dois
+# eixos: o catálogo do Unity Catalog (dev/staging/prod, cada um com seus
+# próprios schemas bronze/silver/gold) e o root_path (pasta pessoal do
+# usuário em dev; /Shared/.bundle/.../staging e /Shared/.bundle/.../prod,
+# que não colidem entre si). Nenhum target usa run_as dedicado ainda: o
+# deploy roda com a identidade do token cadastrado em DBX_SECRET_TRIAL —
+# trocar por um service principal por ambiente quando estiverem disponíveis.
+#
+# O host é repetido em cada target de propósito: `workspace.host` é um
+# campo de autenticação, resolvido pela Databricks CLI *antes* das
+# variáveis do bundle serem processadas — `${var...}` não é interpolado
+# aqui (a CLI falha com "Variable interpolation is not supported for
+# fields that configure authentication"). Para trocar o host de um target
+# específico no futuro, edite o valor literal deste target — não há como
+# centralizar isso numa única variável.
 targets:
   dev:
     mode: development
     default: true
     workspace:
-      host: ${var.workspace_host}
+      host: https://dbc-fc266d3f-2a0d.cloud.databricks.com
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: dev
@@ -77,7 +78,7 @@ targets:
   staging:
     mode: production
     workspace:
-      host: ${var.workspace_host}
+      host: https://dbc-fc266d3f-2a0d.cloud.databricks.com
       root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: staging
@@ -85,7 +86,7 @@ targets:
   prod:
     mode: production
     workspace:
-      host: ${var.workspace_host}
+      host: https://dbc-fc266d3f-2a0d.cloud.databricks.com
       root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: prod
