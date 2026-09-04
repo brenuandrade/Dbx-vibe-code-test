@@ -59,10 +59,8 @@ targets:
     variables:
       catalog: dev
 
-  # staging/prod ainda apontam para placeholders — atualize o host (e, se for
-  # o caso, o service principal) quando esses workspaces existirem. Por ora
-  # o projeto roda inteiramente no workspace único configurado em "dev":
-  # dbc-fc266d3f-2a0d.cloud.databricks.com
+  # staging ainda aponta para um placeholder — atualize o host (e, se for o
+  # caso, o service principal) quando esse workspace existir.
   staging:
     mode: production
     workspace:
@@ -73,12 +71,16 @@ targets:
     run_as:
       service_principal_name: <service-principal-staging>
 
+  # prod roda no mesmo workspace único disponível hoje
+  # (dbc-fc266d3f-2a0d.cloud.databricks.com), isolado de dev pelo catálogo
+  # do Unity Catalog ("prod" vs "dev") e pelo root_path (/Shared vs
+  # /Workspace/Users/...). Sem run_as: o deploy/execução usa a mesma
+  # identidade do token cadastrado em DBX_SECRET_TRIAL — trocar para um
+  # service principal dedicado quando um estiver disponível.
   prod:
     mode: production
     workspace:
-      host: https://<seu-workspace-prod>.cloud.databricks.com
+      host: https://dbc-fc266d3f-2a0d.cloud.databricks.com
       root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: prod
-    run_as:
-      service_principal_name: <service-principal-prod>
